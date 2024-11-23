@@ -64,7 +64,7 @@ int setupGeometry();         // Função para configurar a geometria (triângulo
 void drawGeometry(GLuint shaderID, GLuint VAO, int nVertices, vec3 position, vec3 dimensions, float angle, vec3 color, GLuint drawingMode = GL_TRIANGLE_FAN, int offset = 0, vec3 axis = vec3(0.0, 0.0, 1.0));
 
 
-int createCircle(int nPoints, float radius, float xc, float yc) {
+int createCircle(int nPoints, float radius, float xc = 0, float yc = 0) {
     // Vetor para armazenar os vértices do círculo
     vector<GLfloat> vertices;
     // Ângulo inicial e incremento para cada ponto do círculo
@@ -115,25 +115,25 @@ int createCircle(int nPoints, float radius, float xc, float yc) {
 //cria o segmento da cobrinha retornando um obj geometry com a posição e cor apropriados
 // i: indice do segmento ( 0 para a cabeça, indices maiors para o corpo)
 // dir:vector direção indicando a direção inicial do segmento
-Geometry createSegment(int i, vec3 dir){
+Geometry createSegment(int i, vec3 dir)
+{
+    const float minDistance = 15.0f; // Distância mínima entre os segmentos da cobrinha
+    cout << "Criando segmento " << i << endl;
+    // Inicializa um objeto Geometry para armazenar as informações do segmento
+    Geometry segment;
+    segment.VAO = createCircle(32, 0.5f ); // Cria a geometria do segmento como um círculo
+    segment.nVertices = 34; // Número de vértices do círculo
+    // Define a posição inicial do segmento
+    if (i == 0) { // Cabeça
+         segment.position = vec3(400.0, 300.0, 0.0); // Posição inicial no centro da tela
+    } 
+    else {
+        // Ajusta a direção com base na posição dos segmentos anteriores para evitar sobreposição
+        if (i >= 2)
+        dir = normalize(cobrinha[i - 1].position - cobrinha[i - 2].position);
+        // Posiciona o novo segmento com uma distância mínima do segmento anterior
+        segment.position = cobrinha[i - 1].position + minDistance * dir;
 
-cout<<"criando segmento"<<i<<endl;
-
-//inicializa um obj geometry para armazenar as informações do segmento
-Geometry segment;
-segment.VAO = createCircle(32, 0.5); //cria a geometria do segmento como um circulo
-segment.nVertices = 34;             // Número de vertices do circulo
-
-//Define a posição inical do segmento
-if(i==0){ //cabeça
-    segment.position = vec3(400.0,300.0,0.0); //posição inical no centro da tela
-}
-else{
-    //ajusta a direção com base na posição dos segmentos anteriores para evitar sobreposição
-    if(i>=2)
-    dir=normalize(cobrinha[i-1].position-cobrinha[i-2].position);
-
-    segment.position= cobrinha[ i - 1 ].position + minDistance * dir;
 }
 
 segment.dimensions=vec3(50,50,1.0); //define as dimensões do segmento (tamanho do circulo)
@@ -149,6 +149,7 @@ else{
 
 return segment;
 }
+
 
 int createEyes(int nPoints, float radius){
 
@@ -278,6 +279,14 @@ int main() {
     const GLubyte *version = glGetString(GL_VERSION);
     cout << "Renderer: " << renderer << endl;
     cout << "Versão OpenGL suportada: " << version << endl;
+    // Constantes do programa
+    const float Pi = 3.14159265;     // Valor de Pi, utilizado em cálculos de ângulos e círculos
+    const float minDistance = 15.0f; // Distância mínima entre os segmentos da cobrinha
+    const float maxDistance = 17.0f; // Distância máxima permitida entre os segmentos da cobrinha
+    const float smoothFactor = 0.1f; // Fator de suavização para o movimento dos segmentos
+    const GLuint WIDTH = 800;        // Largura da janela da aplicação em pixels
+    const GLuint HEIGHT = 600;       // Altura da janela da aplicação em pixels
+
 
     // Configurações de viewport
     int width, height;
@@ -324,6 +333,9 @@ int main() {
         // Limpa a tela
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   
+         vec3 position = cobrinha[0].position;
+          float vel = 2.0;
 
         // Pega a posição do mouse e calcula a direção
         double xPos, yPos;
@@ -334,10 +346,10 @@ int main() {
         float angle = atan2(dir.y, dir.x);
         float lookangle = atan2(dir.y, dir.x);
 
-        // Move o triângulo suavemente na direção do mouse
+        /*// Move o triângulo suavemente na direção do mouse
         if (distance(triangle.position, vec3(mousePos, 0.0)) > 0.01f) {
             triangle.position += 0.5f * dir;  // Aumente ou diminua 0.5f para controlar a velocidade
-        }
+        }*/
 
         // Atualiza o ângulo de rotação do triângulo
         //triangle.angle = angle + radians(-90.0f); // Rotaciona para que a ponta aponte para o mouse
@@ -358,7 +370,7 @@ int main() {
         float dynamicSmoothFactor = smoothFactor * (distance / maxDistance);
         if (distance < minDistance)
         {
-            argetPosition = cobrinha[i].position + (distance - minDistance) * dir;
+            targetPosition = cobrinha[i].position + (distance - minDistance) * dir;
         }
         else if (distance > maxDistance)
         {
@@ -367,6 +379,8 @@ int main() {
         // Interpolação suave para a nova posição do segmento
         cobrinha[i].position = mix(cobrinha[i].position, targetPosition, dynamicSmoothFactor);
         }
+
+        bool addNew = false; 
         // Adiciona um novo segmento à cobrinha quando a tecla Espaço é pressionada
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
         {
