@@ -380,18 +380,6 @@ int main() {
         cobrinha[i].position = mix(cobrinha[i].position, targetPosition, dynamicSmoothFactor);
         }
 
-        bool addNew = false; 
-        // Adiciona um novo segmento à cobrinha quando a tecla Espaço é pressionada
-        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-        {
-            addNew = true;
-        }
-        // Adiciona novos segmentos à cobrinha quando solicitado
-        if (addNew)
-        {
-            cobrinha.push_back(createSegment(cobrinha.size(), -dir));
-            addNew = false;
-        }
         // Desenha os segmentos da cobrinha e os olhos
         for (int i = cobrinha.size() - 1; i >= 0; i--)
         {
@@ -435,6 +423,19 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         keys[key] = true;
     if (action == GLFW_RELEASE)
         keys[key] = false;
+    
+        bool addNew = false; 
+        // Adiciona um novo segmento à cobrinha quando a tecla Espaço é pressionada
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+        {
+            addNew = true;
+        }
+        // Adiciona novos segmentos à cobrinha quando solicitado
+        if (addNew)
+        {
+            cobrinha.push_back(createSegment(cobrinha.size(), -dir));
+            addNew = false;
+        }
 }
 
 
